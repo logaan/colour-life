@@ -10,6 +10,7 @@
                  [org.clojure/clojurescript "1.10.773"]
                  [org.clojure/core.async  "0.4.500"]
                  [cljsjs/react "16.6.0-0"]
+                 [cljsjs/create-react-class "15.6.3-1"]
                  [cljsjs/react-dom "16.6.0-0"]
                  [sablono "0.8.6"]]
 

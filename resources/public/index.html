@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="css/style.css" rel="stylesheet" type="text/css">
     <link rel="icon" href="https://clojurescript.org/images/cljs-logo-icon-32.png">
+    <script type="text/javascript">
+      // https://stackoverflow.com/questions/39200994/how-to-play-a-specific-frequency-with-javascript
+      var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+
+      function playNote(frequency, duration) {
+          var oscillator = audioCtx.createOscillator();
+
+          oscillator.type = 'sine';
+          oscillator.frequency.value = frequency; // value in hertz
+          oscillator.connect(audioCtx.destination);
+          oscillator.start(0);
+          oscillator.stop(audioCtx.currentTime + duration/1000);
+      }
+    </script>
   </head>
   <body>
     <div id="app">
