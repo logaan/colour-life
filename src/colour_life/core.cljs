@@ -37,6 +37,11 @@
 (def blinker-vertical
   #{[2 1] [2 2] [2 3]})
 
+(def glider
+  #{      [1 0]
+                [2 1]
+    [0 2] [1 2] [2 2]})
+
 (assert (= blinker-vertical (tick blinker-horizontal)))
 
 ;; Music
@@ -46,16 +51,16 @@
 (defn cells->notes [cells]
   (into #{}
         (for [[x y] cells]
-          (str (notes x) (dec y) ))))
+          (str (notes (mod x 12)) (dec (mod y 12)) ))))
 
 ;; App state
 (defonce app-state
-  (atom {:colours {:red #{[1 2] [2 2] [3 2]}
-                   :blue #{[7 6] [7 7] [7 8]}}
+  (atom {:colours {:red glider
+                   :blue #{[7 1] [7 2] [7 3]}}
          :interval nil}))
 
 ;; Controllers
-(def clock-speed 500)
+(def clock-speed 400)
 
 (defonce synth (-> (new js/Tone.PolySynth) (.toMaster)))
 
