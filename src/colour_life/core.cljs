@@ -38,6 +38,26 @@
 
 (assert (= blinker-vertical (tick blinker-horizontal)))
 
+;; Music
+(def middle-notes
+  [{:name "A"  :freq 440}
+   {:name "b"  :freq 466}
+   {:name "B"  :freq 494}
+   {:name "C"  :freq 523}
+   {:name "C#" :freq 554}
+   {:name "D"  :freq 587}
+   {:name "D#" :freq 622}
+   {:name "E"  :freq 659}
+   {:name "F"  :freq 698}
+   {:name "F#" :freq 740}
+   {:name "G"  :freq 784}
+   {:name "a"  :freq 831}])
+
+(defn notes [population]
+  (->> (map first population)
+       (map middle-notes)
+       (into #{})))
+
 ;; App state
 (def app-state
   (atom {:colours {:red #{[1 2] [2 2] [3 2]}
@@ -45,19 +65,21 @@
          :interval nil}))
 
 ;; Controllers
+(def clock-speed 500)
+
 (defn step []
+  (let [cells (get-in @app-state [:colours :red])
+        notes (->> cells (map first) (map middle-notes))
+        freqs (map :freq notes)]
+    (println freqs)
+    (js/playChord (clj->js freqs) clock-speed))
+
   (swap! app-state
          #(-> (update-in % [:colours :red] tick)
                (update-in [:colours :blue] tick))))
 
-(def clock-speed 500)
-
 (defn play []
-  (let [interval (js/setInterval
-                  (fn []
-                    (js/playNote 440 clock-speed)
-                    (step))
-                  clock-speed)]
+  (let [interval (js/setInterval step clock-speed)]
     (swap! app-state assoc :interval interval)))
 
 (defn stop []
@@ -76,20 +98,6 @@
                 :color (colour board point)
                 :width "1em"
                 :height "1em"}}])
-
-(def middle-notes
-  [{:name "A"  :freq 440}
-   {:name "b"  :freq 466}
-   {:name "B"  :freq 494}
-   {:name "C"  :freq 523}
-   {:name "C#" :freq 554}
-   {:name "D"  :freq 587}
-   {:name "D#" :freq 622}
-   {:name "E"  :freq 659}
-   {:name "F"  :freq 698}
-   {:name "F#" :freq 740}
-   {:name "G"  :freq 784}
-   {:name "a"  :freq 831}])
 
 (defn colour-of-life [state]
   (let [board @state]

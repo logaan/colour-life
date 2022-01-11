@@ -9,14 +9,23 @@
       // https://stackoverflow.com/questions/39200994/how-to-play-a-specific-frequency-with-javascript
       var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
 
-      function playNote(frequency, duration) {
-          var oscillator = audioCtx.createOscillator();
+      function playChord(frequencies, duration) {
+          var gain = audioCtx.createGain();
+          gain.gain.level = 0.5;
+          var now = audioCtx.currentTime;
+          var lastOscillator = gain;
 
-          oscillator.type = 'sine';
-          oscillator.frequency.value = frequency; // value in hertz
-          oscillator.connect(audioCtx.destination);
-          oscillator.start(0);
-          oscillator.stop(audioCtx.currentTime + duration/1000);
+          frequencies.forEach(frequency => {
+              var oscillator = audioCtx.createOscillator();
+
+              oscillator.type = 'triangle';
+              oscillator.frequency.value = frequency;
+              oscillator.connect(gain);
+              oscillator.start(now + 1/100);
+              oscillator.stop(now + duration/1000);
+          })
+
+          gain.connect(audioCtx.destination);
       }
     </script>
   </head>
