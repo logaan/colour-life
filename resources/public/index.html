@@ -5,29 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="css/style.css" rel="stylesheet" type="text/css">
     <link rel="icon" href="https://clojurescript.org/images/cljs-logo-icon-32.png">
-    <script type="text/javascript">
-      // https://stackoverflow.com/questions/39200994/how-to-play-a-specific-frequency-with-javascript
-      var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-
-      function playChord(frequencies, duration) {
-          var gain = audioCtx.createGain();
-          gain.gain.level = 0.5;
-          var now = audioCtx.currentTime;
-          var lastOscillator = gain;
-
-          frequencies.forEach(frequency => {
-              var oscillator = audioCtx.createOscillator();
-
-              oscillator.type = 'triangle';
-              oscillator.frequency.value = frequency;
-              oscillator.connect(gain);
-              oscillator.start(now + 1/100);
-              oscillator.stop(now + duration/1000);
-          })
-
-          gain.connect(audioCtx.destination);
-      }
-    </script>
   </head>
   <body>
     <div id="app">

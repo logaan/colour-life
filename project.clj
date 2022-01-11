@@ -12,6 +12,7 @@
                  [cljsjs/react "16.6.0-0"]
                  [cljsjs/create-react-class "15.6.3-1"]
                  [cljsjs/react-dom "16.6.0-0"]
+                 [cljsjs/tonejs "13.4.9-0"]
                  [sablono "0.8.6"]]
 
   :plugins [[lein-figwheel "0.5.20"]

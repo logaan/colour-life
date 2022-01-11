@@ -2,6 +2,7 @@
     (:require [react]
               [react-dom]
               [cljsjs.create-react-class]
+              [tonejs]
               [sablono.core :as sab :include-macros true]))
 
 ;; General helper funtions
@@ -39,27 +40,16 @@
 (assert (= blinker-vertical (tick blinker-horizontal)))
 
 ;; Music
-(def middle-notes
-  [{:name "A"  :freq 440}
-   {:name "b"  :freq 466}
-   {:name "B"  :freq 494}
-   {:name "C"  :freq 523}
-   {:name "C#" :freq 554}
-   {:name "D"  :freq 587}
-   {:name "D#" :freq 622}
-   {:name "E"  :freq 659}
-   {:name "F"  :freq 698}
-   {:name "F#" :freq 740}
-   {:name "G"  :freq 784}
-   {:name "a"  :freq 831}])
+(def notes
+  ["A" "Bb" "B" "C" "C#" "D" "D#" "E" "F" "F#" "G" "Ab"])
 
-(defn notes [population]
-  (->> (map first population)
-       (map middle-notes)
-       (into #{})))
+(defn cells->notes [cells]
+  (into #{}
+        (for [[x y] cells]
+          (str (notes x) (dec y) ))))
 
 ;; App state
-(def app-state
+(defonce app-state
   (atom {:colours {:red #{[1 2] [2 2] [3 2]}
                    :blue #{[7 6] [7 7] [7 8]}}
          :interval nil}))
@@ -67,12 +57,16 @@
 ;; Controllers
 (def clock-speed 500)
 
+(defonce synth (-> (new js/Tone.PolySynth) (.toMaster)))
+
 (defn step []
-  (let [cells (get-in @app-state [:colours :red])
-        notes (->> cells (map first) (map middle-notes))
-        freqs (map :freq notes)]
-    (println freqs)
-    (js/playChord (clj->js freqs) clock-speed))
+  (let [reds (get-in @app-state [:colours :red])
+        blues (get-in @app-state [:colours :blue])
+        cells (concat reds blues)
+        notes (cells->notes cells)]
+    (println notes)
+
+    (.triggerAttackRelease synth (clj->js notes) "8n"))
 
   (swap! app-state
          #(-> (update-in % [:colours :red] tick)
@@ -110,12 +104,14 @@
       [:table
        [:thead
         [:tr
-         (for [note middle-notes]
-           [:td {:key (str note)} (:name note)])]]
+         [:td]
+         (for [note notes]
+           [:td {:key (str note)} note])]]
        [:tbody
-       (for [x (range 0 12)]
-         [:tr {:key x}
-          (for [y (range 0 12)]
+       (for [y (range 0 12)]
+         [:tr {:key y}
+          [:td (dec y)]
+          (for [x (range 0 12)]
             (cell board [x y]))])]]])))
 
 ;; React interop and boostrapping
