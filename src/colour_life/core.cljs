@@ -54,10 +54,14 @@
           (str (notes (mod x 12)) (dec (mod y 12)) ))))
 
 ;; App state
+(def initial
+  {:colours {"red" glider
+             "blue" #{[7 1] [7 2] [7 3]}}
+   :interval nil
+   :draw "red"})
+
 (defonce app-state
-  (atom {:colours {:red glider
-                   :blue #{[7 1] [7 2] [7 3]}}
-         :interval nil}))
+  (atom initial))
 
 ;; Controllers
 (def clock-speed 400)
@@ -65,8 +69,8 @@
 (defonce synth (-> (new js/Tone.PolySynth) (.toMaster)))
 
 (defn step []
-  (let [reds (get-in @app-state [:colours :red])
-        blues (get-in @app-state [:colours :blue])
+  (let [reds (get-in @app-state [:colours "red"])
+        blues (get-in @app-state [:colours "blue"])
         cells (concat reds blues)
         notes (cells->notes cells)]
     (println notes)
@@ -74,8 +78,8 @@
     (.triggerAttackRelease synth (clj->js notes) "8n"))
 
   (swap! app-state
-         #(-> (update-in % [:colours :red] tick)
-               (update-in [:colours :blue] tick))))
+         #(-> (update-in % [:colours "red"] tick)
+               (update-in [:colours "blue"] tick))))
 
 (defn play []
   (let [interval (js/setInterval step clock-speed)]
@@ -84,15 +88,35 @@
 (defn stop []
   (js/clearInterval (:interval @app-state)))
 
+(defn toggle [point]
+  (swap! app-state
+         (fn [state]
+             (update-in state [:colours (:draw state)]
+                        (fn [population]
+                          (if (contains? population point)
+                            (disj population point)
+                            (conj population point)))))))
+
+(defn set-draw [colour]
+  (swap! app-state assoc :draw colour))
+
+(defn reset []
+  (stop)
+  (reset! app-state initial))
+
 ;; Views
 (defn colour [board point]
+  (let [red? (get-in board [:colours "red" point])
+        blue? (get-in board [:colours "blue" point])]
   (cond
-    (get-in board [:colours :red point]) :red
-    (get-in board [:colours :blue point]) :blue
-    :else :grey))
+    (and red? blue?) "purple"
+    red? "red"
+    blue? "blue"
+    :else :grey)))
 
 (defn cell [board point]
   [:td {:key (str point)
+        :on-click #(toggle point)
         :style {:background-color (colour board point)
                 :color (colour board point)
                 :width "1em"
@@ -103,9 +127,22 @@
     (sab/html
      [:div
       [:h1 "Colour of Life"]
-      [:button {:on-click step} "Step"]
-      [:button {:on-click play} "Play"]
-      [:button {:on-click stop} "Stop"]
+      [:p
+       "Draw: "
+       [:label
+        [:input {:type :radio
+                 :name "colour"
+                 :value "red"
+                 :on-click #(set-draw "red")
+                 :checked (= "red" (:draw board))}]
+        "Red"]
+       [:label
+        [:input {:type :radio
+                 :name "colour"
+                 :value "blue"
+                 :on-click #(set-draw "blue")
+                 :checked (= "blue" (:draw board))}]
+        "Blue"]]
       [:table
        [:thead
         [:tr
@@ -117,7 +154,13 @@
          [:tr {:key y}
           [:td (dec y)]
           (for [x (range 0 12)]
-            (cell board [x y]))])]]])))
+            (cell board [x y]))])]]
+      [:p
+       [:button {:on-click step} "Step"]
+       [:button {:on-click play} "Play"]
+       [:button {:on-click stop} "Stop"]
+       [:button {:on-click reset} "Reset"]]
+      [:pre (str board)]])))
 
 ;; React interop and boostrapping
 (def class
