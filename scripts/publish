@@ -2,7 +2,7 @@
 
 lein cljsbuild once min
 
-cp -v resources/public/index.html doc/index.html
-cp -v resources/public/css/style.css doc/css/style.css
+cp -v resources/public/index.html docs/index.html
+cp -v resources/public/css/style.css docs/css/style.css
 
-echo "cd doc && python3 -m http.server"
+echo "cd docs && python3 -m http.server"
