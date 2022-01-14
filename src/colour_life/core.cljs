@@ -127,7 +127,7 @@
       [:p [:a {:href "https://github.com/logaan/colour-life/blob/main/src/colour_life/core.cljs"}
            "Source code on Github"]]
       [:p
-       "Draw: "
+       "Click on a cell to draw in: "
        [:label
         [:input {:type :radio
                  :name "colour"
