@@ -1,14 +1,10 @@
 (ns colour-life.core
-    (:require [react]
-              [react-dom]
-              [cljsjs.create-react-class]
-              [tonejs]
-              [sablono.core :as sab :include-macros true]))
-
-;; General helper funtions
-(defn log [v]
-  (println (str v))
-  v)
+  (:require [react]
+            [react-dom]
+            [cljsjs.create-react-class]
+            [tonejs]
+            [cljs.pprint]
+            [sablono.core :as sab :include-macros true]))
 
 ;; Core game of life stuff
 (defn neighbours [[x y]]
@@ -16,33 +12,19 @@
     [(dec x)    y   ]                   [(inc x)    y   ]
     [(dec x) (inc y)] [   x    (inc y)] [(inc x) (inc y)]})
 
-(defn neighbour-count [population point]
-  (->> (neighbours point) (filter population) count))
-
-(defn is-alive? [population point]
-  (condp = (neighbour-count population point)
+(defn is-alive? [neighbour-count was-alive?]
+  (condp = neighbour-count
     3 true
-    2 (contains? population point)
+    2 was-alive?
     false))
 
 (defn tick [population]
-  (let [potentially-alive (into #{} (mapcat neighbours population))]
+  (let [potentially-alive (mapcat neighbours population)
+        neighbour-count   (frequencies potentially-alive)]
     (->> potentially-alive
-         (filter #(is-alive? population %))
+         (filter #(is-alive? (neighbour-count %)
+                             (contains? population %)))
          (into #{}))))
-
-(def blinker-horizontal
-  #{[1 2] [2 2] [3 2]})
-
-(def blinker-vertical
-  #{[2 1] [2 2] [2 3]})
-
-(def glider
-  #{      [1 0]
-                [2 1]
-    [0 2] [1 2] [2 2]})
-
-(assert (= blinker-vertical (tick blinker-horizontal)))
 
 ;; Music
 (def notes
@@ -55,8 +37,10 @@
 
 ;; App state
 (def initial
-  {:colours {"red" glider
-             "blue" #{[7 1] [7 2] [7 3]}}
+  {:colours {"red" #{       [1 0]
+                     [2 1]
+                     [0 2] [1 2] [2 2]}
+             "blue" #{[6 2] [7 2] [8 2]}}
    :interval nil
    :draw "red"})
 
@@ -73,46 +57,44 @@
         blues (get-in @app-state [:colours "blue"])
         cells (concat reds blues)
         notes (cells->notes cells)]
-    (println notes)
+    (.triggerAttackRelease synth (clj->js notes) "8n")
 
-    (.triggerAttackRelease synth (clj->js notes) "8n"))
-
-  (swap! app-state
-         #(-> (update-in % [:colours "red"] tick)
-               (update-in [:colours "blue"] tick))))
+    (swap! app-state
+           #(-> (update-in % [:colours "red"] tick)
+                (update-in [:colours "blue"] tick)))))
 
 (defn play []
   (let [interval (js/setInterval step clock-speed)]
     (swap! app-state assoc :interval interval)))
 
-(defn stop []
+(defn pause []
   (js/clearInterval (:interval @app-state)))
 
 (defn toggle-cell [point]
   (swap! app-state
          (fn [state]
-             (update-in state [:colours (:draw state)]
-                        (fn [population]
-                          (if (contains? population point)
-                            (disj population point)
-                            (conj population point)))))))
+           (update-in state [:colours (:draw state)]
+                      (fn [population]
+                        (if (contains? population point)
+                          (disj population point)
+                          (conj population point)))))))
 
 (defn set-draw [colour]
   (swap! app-state assoc :draw colour))
 
 (defn reset []
-  (stop)
+  (pause)
   (reset! app-state initial))
 
 ;; Views
 (defn colour [board point]
   (let [red? (get-in board [:colours "red" point])
         blue? (get-in board [:colours "blue" point])]
-  (cond
-    (and red? blue?) "purple"
-    red? "red"
-    blue? "blue"
-    :else :grey)))
+    (cond
+      (and red? blue?) "purple"
+      red? "red"
+      blue? "blue"
+      :else :grey)))
 
 (defn cell [board point]
   [:td {:key (str point)
@@ -127,6 +109,8 @@
     (sab/html
      [:div
       [:h1 "Colour of Life"]
+      [:p [:a {:href "https://github.com/logaan/colour-life/blob/main/src/colour_life/core.cljs"}
+           "Source code on Github"]]
       [:p
        "Draw: "
        [:label
@@ -150,15 +134,15 @@
          (for [note notes]
            [:td {:key (str note)} note])]]
        [:tbody
-       (for [y (range 0 12)]
-         [:tr {:key y}
-          [:td (dec y)]
-          (for [x (range 0 12)]
-            (cell board [x y]))])]]
+        (for [y (range 0 12)]
+          [:tr {:key y}
+           [:td (dec y)]
+           (for [x (range 0 12)]
+             (cell board [x y]))])]]
       [:p
-       [:button {:on-click step} "Step"]
+       [:button {:on-click step} "Step"] -
        [:button {:on-click play} "Play"]
-       [:button {:on-click stop} "Stop"]
+       [:button {:on-click pause} "Pause"] -
        [:button {:on-click reset} "Reset"]]
       [:pre
        [:code
