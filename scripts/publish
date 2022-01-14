@@ -5,4 +5,5 @@ lein cljsbuild once min
 cp -v resources/public/index.html docs/index.html
 cp -v resources/public/css/style.css docs/css/style.css
 
+echo "http://localhost:8000/"
 echo "cd docs && python3 -m http.server"

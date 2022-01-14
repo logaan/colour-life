@@ -37,12 +37,13 @@
 
 ;; App state
 (def initial
-  {:colours {"red" #{       [1 0]
+  {:cells {"red" #{       [1 0]
                      [2 1]
                      [0 2] [1 2] [2 2]}
              "blue" #{[6 2] [7 2] [8 2]}}
    :interval nil
-   :draw "red"})
+   :draw-colour "red"
+   :drawing false})
 
 (defonce app-state
   (atom initial))
@@ -53,15 +54,15 @@
 (defonce synth (-> (new js/Tone.PolySynth) (.toMaster)))
 
 (defn step []
-  (let [reds (get-in @app-state [:colours "red"])
-        blues (get-in @app-state [:colours "blue"])
+  (let [reds (get-in @app-state [:cells "red"])
+        blues (get-in @app-state [:cells "blue"])
         cells (concat reds blues)
         notes (cells->notes cells)]
     (.triggerAttackRelease synth (clj->js notes) "8n")
 
     (swap! app-state
-           #(-> (update-in % [:colours "red"] tick)
-                (update-in [:colours "blue"] tick)))))
+           #(-> (update-in % [:cells "red"] tick)
+                (update-in [:cells "blue"] tick)))))
 
 (defn play []
   (let [interval (js/setInterval step clock-speed)]
@@ -73,14 +74,14 @@
 (defn toggle-cell [point]
   (swap! app-state
          (fn [state]
-           (update-in state [:colours (:draw state)]
+           (update-in state [:cells (:draw-colour state)]
                       (fn [population]
                         (if (contains? population point)
                           (disj population point)
                           (conj population point)))))))
 
-(defn set-draw [colour]
-  (swap! app-state assoc :draw colour))
+(defn set-colour [colour]
+  (swap! app-state assoc :draw-colour colour))
 
 (defn reset []
   (pause)
@@ -88,17 +89,31 @@
 
 ;; Views
 (defn colour [board point]
-  (let [red? (get-in board [:colours "red" point])
-        blue? (get-in board [:colours "blue" point])]
+  (let [red? (get-in board [:cells "red" point])
+        blue? (get-in board [:cells "blue" point])]
     (cond
       (and red? blue?) "purple"
       red? "red"
       blue? "blue"
-      :else :grey)))
+      :else "#DDD")))
+
+(defn start-drawing [point]
+  (toggle-cell point)
+  (swap! app-state assoc :drawing true))
+
+(defn stop-drawing []
+  (swap! app-state assoc :drawing false))
+
+(defn draw [point]
+  (if (:drawing @app-state)
+    (toggle-cell point)))
 
 (defn cell [board point]
   [:td {:key (str point)
-        :on-click #(toggle-cell point)
+        :on-mouse-down (fn [e]
+                         (start-drawing point)
+                         (.preventDefault e))
+        :on-mouse-over #(draw point)
         :style {:background-color (colour board point)
                 :color (colour board point)
                 :width "1.5em"
@@ -107,7 +122,7 @@
 (defn colour-of-life [state]
   (let [board @state]
     (sab/html
-     [:div
+     [:div {:on-mouse-up #(stop-drawing)}
       [:h1 "Colour of Life"]
       [:p [:a {:href "https://github.com/logaan/colour-life/blob/main/src/colour_life/core.cljs"}
            "Source code on Github"]]
@@ -117,17 +132,17 @@
         [:input {:type :radio
                  :name "colour"
                  :value "red"
-                 :on-click #(set-draw "red")
-                 :checked (= "red" (:draw board))}]
+                 :on-click #(set-colour "red")
+                 :checked (= "red" (:draw-colour board))}]
         "Red"]
        [:label
         [:input {:type :radio
                  :name "colour"
                  :value "blue"
-                 :on-click #(set-draw "blue")
-                 :checked (= "blue" (:draw board))}]
+                 :on-click #(set-colour "blue")
+                 :checked (= "blue" (:draw-colour board))}]
         "Blue"]]
-      [:table
+      [:table {:style {:user-select "none"}}
        [:thead
         [:tr
          [:td]
