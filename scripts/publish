@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+lein cljsbuild once min
+
+cp -v resources/public/index.html doc/index.html
+cp -v resources/public/css/style.css doc/css/style.css
+
+echo "cd doc && python3 -m http.server"

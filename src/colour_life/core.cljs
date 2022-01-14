@@ -88,7 +88,7 @@
 (defn stop []
   (js/clearInterval (:interval @app-state)))
 
-(defn toggle [point]
+(defn toggle-cell [point]
   (swap! app-state
          (fn [state]
              (update-in state [:colours (:draw state)]
@@ -116,7 +116,7 @@
 
 (defn cell [board point]
   [:td {:key (str point)
-        :on-click #(toggle point)
+        :on-click #(toggle-cell point)
         :style {:background-color (colour board point)
                 :color (colour board point)
                 :width "1em"
@@ -160,7 +160,9 @@
        [:button {:on-click play} "Play"]
        [:button {:on-click stop} "Stop"]
        [:button {:on-click reset} "Reset"]]
-      [:pre (str board)]])))
+      [:pre
+       [:code
+        (with-out-str (cljs.pprint/pprint board))]]])))
 
 ;; React interop and boostrapping
 (def class

@@ -47,10 +47,16 @@
                ;; lein cljsbuild once min
                {:id "min"
                 :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/colour_life.js"
-                           :main colour-life.core
+                :compiler {:main colour-life.core
+                           :asset-path "js/compiled/out"
+                           :output-to "doc/js/compiled/colour_life.js"
+                           :output-dir "doc/js/compiled/out"
+                           :source-map-timestamp true
                            :optimizations :advanced
-                           :pretty-print false}}]}
+                           ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
+                           ;; https://github.com/binaryage/cljs-devtools
+                           :preloads [devtools.preload]
+                           :verbose true}}]}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
              ;; :server-port 3449 ;; default
