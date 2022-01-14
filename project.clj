@@ -50,7 +50,6 @@
                 :compiler {:main colour-life.core
                            :asset-path "js/compiled/out"
                            :output-to "docs/js/compiled/colour_life.js"
-                           :output-dir "docs/js/compiled/out"
                            :source-map-timestamp true
                            :optimizations :advanced
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome

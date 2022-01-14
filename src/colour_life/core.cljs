@@ -119,8 +119,8 @@
         :on-click #(toggle-cell point)
         :style {:background-color (colour board point)
                 :color (colour board point)
-                :width "1em"
-                :height "1em"}}])
+                :width "1.5em"
+                :height "1.5em"}}])
 
 (defn colour-of-life [state]
   (let [board @state]
